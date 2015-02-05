@@ -25,7 +25,7 @@ import java.util.Arrays;
  *
  */
 public class SegmentTreeHeap {
-    static Node[] heap;
+    public Node[] heap;
     Integer[] array;
     int size;
 
@@ -51,7 +51,7 @@ public class SegmentTreeHeap {
 
             heap[v].sum = heap[2*v].sum + heap[ 2*v + 1].sum;
             //min = min of the children
-            heap[v].min = heap[2*v].min < heap[ 2*v + 1].min ? heap[2*v].min : heap[2*v + 1].min ;
+            heap[v].min = Math.min(heap[2*v].min, heap[2*v + 1].min);
         }
     }
 
@@ -112,7 +112,7 @@ public class SegmentTreeHeap {
             return Math.min(leftMin, rightMin);
         }
 
-        return 0;
+        return Integer.MAX_VALUE;
     }
 
 
@@ -178,7 +178,17 @@ public class SegmentTreeHeap {
         int size(){
             return to - from + 1;
         }
+        public String toString(){
+            return "RSQ: " + sum + "(" + from + ", " + to + ") " + pendingVal;
+        }
+
+
     }
 
+    @Override
+    public  String toString(){
+
+        return Arrays.toString(heap);
+    }
 
 }
