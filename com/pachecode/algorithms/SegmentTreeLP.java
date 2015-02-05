@@ -5,15 +5,26 @@ import java.util.*;
 /**
  * Created by ricardodpsx@gmail.com on 31/01/15.
  *
+ * SegmentTree with lazy propagation and lazy initialization.
+ *
  * How it works:
- * 1) You can perform range Updates with an Operation
- * 2) The operations update the tree from top to bottom when needed
+ * 1) You can perform the tipical RMQ and RSQ
+ *
+ * 2) To update the array you use 'Operations'
+ *    The operations lazyly-update the tree from root to bottom (Example st.update(0, 4, MultiplyBy(2)) will only perform
+ *    The operation into the bigger ranges it can and the values will eventually update their children (when needed).
+ *
  * 3) If you are visiting a Node and you try to visit one of it's children (right or left)
- *      the Node will "propate" the operation
+ *      the Node will "propate" the pending operations.
+ *
  * 4) The array used to initialize the tree won't be valid outside of this structure (due to lazy propagation of changes)
  *
+ * 5) Some Operations can "infer" values for a range, for example if you perform a 'set' operation like st.update(0, 4, new SetOperation(2))
+ *    the array will have the value 2 for the range 0, 4.
+ *   So if you perform a MinPQ like st.RMinQ(1,3) the value of this will be just 2, you don't need to go deeper in the tree to knwo that.
  *
  *
+
  *
  * Segmentree with Lazy propagation
  */
