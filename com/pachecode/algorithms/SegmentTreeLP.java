@@ -8,8 +8,10 @@ import java.util.*;
  * How it works:
  * 1) You can perform range Updates with an Operation
  * 2) The operations update the tree from top to bottom when needed
- * 2) If you are visiting a Node and you try to visit one of it's children (right or left)
+ * 3) If you are visiting a Node and you try to visit one of it's children (right or left)
  *      the Node will "propate" the operation
+ * 4) The array used to initialize the tree won't be valid outside of this structure (due to lazy propagation of changes)
+ *
  *
  *
  *
@@ -27,12 +29,12 @@ public class SegmentTreeLP {
 
 
     public int RMinQ(int from, int to) {
-        return RMQ(root, from, to)[1];
+        return RMinQ(root, from, to);
     }
 
-    private int[] RMQ(Node node, int from, int to){
+    private int RMinQ(Node node, int from, int to){
 
-        //If the range falls inside a the node maybe a lazy operation can infer the sum or min
+        //If the range falls inside a the node maybe a lazy operation can infer the RSQ or min
         if( !node.pendingOps.isEmpty()
                 && node.pendingOps.peek().canInfer()
                 && from >= node.from() && to <= node.to() ){
@@ -44,21 +46,21 @@ public class SegmentTreeLP {
             return node.getMin();
         }
 
-        int[] leftMin = null;
+        Integer leftMin = null;
         if( intersects(from, to, node.leftFrom(), node.leftTo()) ){
-            leftMin = RMQ(node.left(), from, to);
+            leftMin = RMinQ(node.left(), from, to);
         }
 
-        int[] rightMin = null;
+        Integer rightMin = null;
         if(  intersects(from, to, node.rightFrom(), node.rightTo()) ){
-            rightMin = RMQ(node.right(), from, to);
+            rightMin = RMinQ(node.right(), from, to);
         }
 
-        int[] min;
+        int min;
 
         if(rightMin == null) min = leftMin;
         else if(leftMin == null) min = rightMin;
-        else min =  leftMin[1] <= rightMin[1] ? leftMin : rightMin;
+        else min =  leftMin <= rightMin ? leftMin : rightMin;
 
 
         return min;
@@ -71,7 +73,7 @@ public class SegmentTreeLP {
 
     private int RSQ(Node node, int from, int to) {
 
-        //If the range falls inside a bigger node maybe a lazy operation can infer the sum or min
+        //If the range falls inside a bigger node maybe a lazy operation can infer the RSQ or min
         if( !node.pendingOps.isEmpty()
                 && node.pendingOps.peek().canInfer()
                 && from >= node.from() && to <= node.to() ){
@@ -116,7 +118,6 @@ public class SegmentTreeLP {
         if( node.from() >= from && node.to() <= to ){
 
             //We execute the Operation so it does what it needs to
-            //new SetOperation(value).doIt(node);
             op.doIt(node);
 
             return;
@@ -149,6 +150,7 @@ public class SegmentTreeLP {
 
 
 
+
     static abstract  class  Operation {
         abstract void doIt(Node n);
 
@@ -161,18 +163,29 @@ public class SegmentTreeLP {
         }
 
 
-        public int[] inferMin(int from, int to, Node n) {
-            return null;
+        public int inferMin(int from, int to, Node n) {
+            return 0;
         }
 
     }
 
+    public void forceExpand(){
+        root.forceExpand();
+    }
+
     private class Node {
+
+        void forceExpand(){
+            if(size() == 1) return;
+            propagate();
+            left().forceExpand();
+            right().forceExpand();
+        }
 
         //Pending for lazy propagation
         Queue<Operation> pendingOps = new LinkedList<>();
 
-        int[] min = null;
+        Integer min = null;
         Integer sum = null;
         Node left, right;
 
@@ -184,22 +197,14 @@ public class SegmentTreeLP {
             this.pArray = pArray;
 
             if(pArray.size() == 1) {
-                //Aplying pending OPS
-                min = new int[2];
-                min[0] = pArray.getFrom();
-                min[1] = pArray.get(0);
+                min = pArray.get(0);
                 sum = pArray.get(0);
             }
 
 
         }
 
-        void forceExpand(){
-            if(size() == 1) return;
-            propagate();
-            left().forceExpand();
-            right().forceExpand();
-        }
+
 
         //Propagate the operations to its children before someone access them
         void propagate(){
@@ -258,10 +263,10 @@ public class SegmentTreeLP {
         //Recurse over its childs to get the min
         void update(){
 
-            int[] posLeft = left().getMin();
-            int[] posRight = right().getMin();
+            int minLeft = left().getMin();
+            int minRight = right().getMin();
 
-            min = ( posLeft[1] <= posRight[1]) ? posLeft: posRight;
+            min = ( minLeft <= minRight) ? minLeft: minRight;
 
             sum = left().getSum() + right().getSum();
 
@@ -273,7 +278,7 @@ public class SegmentTreeLP {
             return sum;
         }
 
-        int[] getMin(){
+        int getMin(){
 
             //If min is not indexed it has to get it
             if(min == null) {
@@ -289,9 +294,8 @@ public class SegmentTreeLP {
             return String.format("(%d, %d) => %s | Min[%s]: %s | Sum: %s | PendingOps: %s",
                     pArray.getFrom(), pArray.getTo(),
                     pArray.toString(),
-                    min!=null?min[0]:"?",
-                    min != null? min[1]: "null",
-                    sum != null? sum: "null",
+                    min,
+                    sum,
                     Arrays.toString( pendingOps.toArray() )
             );
         }
@@ -314,8 +318,7 @@ public class SegmentTreeLP {
 
         StringBuilder out = new StringBuilder();
 
-        //out.append("Inf Array: " + Arrays.toString( toArray() ) + "\n");
-        //Deep First Traversing tree
+       //Deep First Traversing tree
         while(!q.isEmpty()) {
             Node r = q.pop();
 
@@ -340,25 +343,24 @@ public class SegmentTreeLP {
         }
         @Override
         public void doIt(Node n) {
-            n.min = new int[] {n.from(),value};
+            n.min = value;
             n.sum = n.size() * value;
 
-            //This operation replaces all
+            //This operation clears the queue
             n.pendingOps.clear();
 
 
             if(n.size() != 1) {
                 n.pendingOps.add(this);
             }else{
+                //updating the real array
                 n.pArray.set(0, value);
             }
         }
 
         @Override
-        public int[] inferMin(int from, int to, Node n){
-            //Updates the node at that position
-            //n.pArray.setReal(from, value);
-            return new int[]{from, value};
+        public int inferMin(int from, int to, Node n){
+            return value;
         }
 
         @Override
@@ -376,49 +378,54 @@ public class SegmentTreeLP {
         public String toString(){
             return "Set: " + value;
         }
+
+        public int getValue(){
+            return value;
+        }
     }
 
-
-    /*************** Toggle from 0 to 1 and viceversa operation ****************/
-
-    //To toggle between 0 and 1
-    public static class Toggle extends Operation{
-
+    /*** Multiply by X operation ****/
+    static class MultiplyBy extends Operation{
+        int value;
+        public MultiplyBy(int value){
+            this.value = value;
+        }
         @Override
         public void doIt(Node n) {
 
 
-            if(n.pendingOps.peek() instanceof SetOperation) {
+
+            //If the peek is a Set Operation just multiply it
+            if(n.pendingOps.peek() instanceof SetOperation){
 
                 SetOperation op = ((SetOperation) (n.pendingOps.peek()));
                 //Just update the operation value and do nothing else
 
-                new SetOperation(op.value == 0 ? 1 : 0).doIt(n);
+                new SetOperation(op.getValue() * value ).doIt(n);
 
                 return;
             }
 
-            //Invert the sum
-            if(n.sum != null)
-                n.sum = n.size() - n.sum;
+            if(n.min != null)
+                n.min = n.min * value;
 
-            if(n.sum != null && n.min != null) {
-                //If there are no ones, all of them will be 1
-                if(n.sum == 0) n.min = new int[]{ 0 , 1};
-                //else there is at least a 1 it will become 0
-                //Todo: Warning: This will fail! if you are using positions!!
-                else n.min = new int[]{ 0 , 0 };
+            if(n.sum != null)
+                n.sum = n.sum * value;
+
+            //If the peek is a Multiplyby operation just update the pending value and dont add it to the queue
+            if(n.pendingOps.peek() instanceof MultiplyBy){
+                MultiplyBy op = ((MultiplyBy) (n.pendingOps.peek()));
+                op.value = op.value*value;
+
+                return;
             }
 
-            if(n.size() > 1) {
-                if( n.pendingOps.peek() instanceof Toggle)
-                    n.pendingOps.poll();
-                else
-                    n.pendingOps.add(this);
-            }else{
-                n.pArray.set(0, n.pArray.get(0) == 0 ? 1 : 0);
-                n.min = new int[]{n.from(), n.pArray.get(0)};
 
+            if(n.size() > 1) {
+                n.pendingOps.add(this);
+            }else{
+                //updating the real array
+                n.pArray.set(0, value*n.pArray.get(0));
             }
         }
 
@@ -426,12 +433,18 @@ public class SegmentTreeLP {
 
         @Override
         public String toString(){
-            return "Toggle";
+            return "MultiplyBy: " + value;
         }
     }
 
 
+
     /********************* Set Pattern Operation **************************/
+    /**
+     * TODO: provides the ability to lazy update with a given pattern like st.update(0, 9, [2,1,34])
+     * so the array gets updated like [2, 1, 34, 2, 1, 34, 2, 1, 34]
+     * and you can use this to infer values
+    */
     static public class SetPattern extends Operation{
         Integer[] pattern;
         int sum = 0;

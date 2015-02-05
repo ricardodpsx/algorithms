@@ -3,7 +3,7 @@ package com.pachecode.algorithms;
 /**
  * Created by ricardodpsx@gmail.com on 1/02/15.
  *
- * SegmentTree with Lazy Querying
+ * SegmentTree with Lazy Initialization
  *
  *
  */

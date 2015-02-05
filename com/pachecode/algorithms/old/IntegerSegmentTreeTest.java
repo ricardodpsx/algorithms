@@ -116,7 +116,7 @@ public class IntegerSegmentTreeTest {
 
         //Integer[] ar = new Integer[] {1};
 
-        //SegmentTree<Integer> s = new SegmentTree<>(ar, SegmentTree.min(), SegmentTree.sum());
+        //SegmentTree<Integer> s = new SegmentTree<>(ar, SegmentTree.min(), SegmentTree.RSQ());
 
 
         Integer[] ar = new Integer[]{1, 2, 3, -2, 4, 5, -1, 7, 8};
@@ -138,7 +138,7 @@ public class IntegerSegmentTreeTest {
 
         //Integer[] ar = new Integer[] {1};
 
-        //SegmentTree<Integer> s = new SegmentTree<>(ar, SegmentTree.min(), SegmentTree.sum());
+        //SegmentTree<Integer> s = new SegmentTree<>(ar, SegmentTree.min(), SegmentTree.RSQ());
 
 
         Integer[] ar = new Integer[]{1, 2, 3, -2, 4, 5, -1, 7, 8};

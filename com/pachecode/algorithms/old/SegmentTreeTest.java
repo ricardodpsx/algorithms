@@ -45,12 +45,12 @@ public class SegmentTreeTest {
 
         //Integer[] ar = new Integer[] {1};
 
-        //SegmentTree<Integer> s = new SegmentTree<>(ar, SegmentTree.min(), SegmentTree.sum());
+        //SegmentTree<Integer> s = new SegmentTree<>(ar, SegmentTree.min(), SegmentTree.RSQ());
 
 
         Integer[] ar = new Integer[]{1, 2, 3, -2, 4, 5, -1, 7, 8};
 
-        SegmentTree s = new SegmentTree(ar, SegmentTree.naturalOrder, SegmentTree.sum());//adding minimal as indexer and sum as aggregator
+        SegmentTree s = new SegmentTree(ar, SegmentTree.naturalOrder, SegmentTree.sum());//adding minimal as indexer and RSQ as aggregator
 
         assertEquals(1, ar[ s.search(0, 0)] );
         assertEquals(8, ar[ s.search(8, 8)] );
@@ -67,12 +67,12 @@ public class SegmentTreeTest {
 
         //Integer[] ar = new Integer[] {1};
 
-        //SegmentTree<Integer> s = new SegmentTree<>(ar, SegmentTree.min(), SegmentTree.sum());
+        //SegmentTree<Integer> s = new SegmentTree<>(ar, SegmentTree.min(), SegmentTree.RSQ());
 
 
         Integer[] ar = new Integer[]{1, 2, 3, -2, 4, 5, -1, 7, 8};
 
-        SegmentTree s = new SegmentTree(ar, SegmentTree.naturalOrder, SegmentTree.sum());//adding minimal as indexer and sum as aggregator
+        SegmentTree s = new SegmentTree(ar, SegmentTree.naturalOrder, SegmentTree.sum());//adding minimal as indexer and RSQ as aggregator
 
         s.update(3, 4);
 
@@ -126,7 +126,7 @@ public class SegmentTreeTest {
     @Test
     public void test3SizeArray() {
         Integer[] ar = new Integer[]{1, 2, 3};
-        SegmentTree s = new SegmentTree(ar, SegmentTree.naturalOrder, SegmentTree.sum());//adding minimal as indexer and sum as aggregator
+        SegmentTree s = new SegmentTree(ar, SegmentTree.naturalOrder, SegmentTree.sum());//adding minimal as indexer and RSQ as aggregator
 
         assertEquals(6,  s.aggregation(0, 2) );
         assertEquals(3, s.aggregation(0, 1) );
@@ -150,7 +150,7 @@ public class SegmentTreeTest {
     @Test
     public void test1SizeArray() {
         Integer[] ar = new Integer[]{1};
-        SegmentTree s = new SegmentTree(ar, SegmentTree.naturalOrder, SegmentTree.sum());//adding minimal as indexer and sum as aggregator
+        SegmentTree s = new SegmentTree(ar, SegmentTree.naturalOrder, SegmentTree.sum());//adding minimal as indexer and RSQ as aggregator
 
         assertEquals(1,  s.aggregation(0, 0) );
         assertEquals(1, ar[ (int) s.search(0, 0)] );
@@ -165,7 +165,7 @@ public class SegmentTreeTest {
     @Test
     public void test2SizeArray() {
         Integer[] ar = new Integer[]{1, 2};
-        SegmentTree s = new SegmentTree(ar, SegmentTree.naturalOrder, SegmentTree.sum());//adding minimal as indexer and sum as aggregator
+        SegmentTree s = new SegmentTree(ar, SegmentTree.naturalOrder, SegmentTree.sum());//adding minimal as indexer and RSQ as aggregator
 
         assertEquals(3, s.aggregation(0, 1) );
         assertEquals(2,s.aggregation(1, 1) );
@@ -213,7 +213,7 @@ public class SegmentTreeTest {
     public static void main(String args[]) {
         Integer[] ar = new Integer[]{1, 3, 45, 2, 13, 40, 100, 1, 32};
 
-        SegmentTree s = new SegmentTree(ar, SegmentTree.naturalOrder, SegmentTree.sum());//adding minimal as indexer and sum as aggregator
+        SegmentTree s = new SegmentTree(ar, SegmentTree.naturalOrder, SegmentTree.sum());//adding minimal as indexer and RSQ as aggregator
 
         out.println(s);
 

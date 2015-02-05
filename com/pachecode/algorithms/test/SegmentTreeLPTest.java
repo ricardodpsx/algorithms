@@ -12,6 +12,8 @@ import static org.junit.Assert.assertEquals;
 
 /**
  * Created by ricardodpsx@gmail.com on 8/01/15.
+ * SegmentTree with Lazy Initialization and LazyPropagation of operations.
+ *
  */
 public class SegmentTreeLPTest {
     Integer[][] arrays;
@@ -54,38 +56,6 @@ public class SegmentTreeLPTest {
         //out.println(s);
         assertEquals(4, s.RSQ(0, 9));
 
-        s.updateRange(0,9, new SegmentTreeLP.Toggle()); //0 0 1 1 1 0 0 1 1
-
-        assertEquals(5, s.RSQ(0, 9));
-        s.RSQ(0, 2);
-        assertEquals(1, s.RSQ(0, 2));
-
-    }
-
-    @Test
-    public void testRangeUpdate2() {
-        Integer[] ar = new Integer[]{0,0,0,0,0,0,0,0,0};
-        SegmentTreeLP s = new SegmentTreeLP(ar);
-        s.updateRange(0,3, 1);//1 1 1 1 0 0 0 0 0
-
-        assertEquals(1, s.RMinQ(1,2));
-        assertEquals(2, s.RSQ(1, 2));
-
-
-        s.updateRange(0,5, new SegmentTreeLP.Toggle()); //0 0 0 0 1 1 0 0 0
-        s.updateRange(0,5, new SegmentTreeLP.Toggle());
-        s.updateRange(0,5, new SegmentTreeLP.Toggle()); //0 0 0 0 1 1 0 0 0
-        //out.println(s);
-        assertEquals(0, s.RSQ(0,2));
-        assertEquals(2, s.RSQ(0,8));
-
-        s.updateRange(3,8, new SegmentTreeLP.Toggle());//0 0 0 1 0 0 1 1 1
-        s.updateRange(2, 4, 2); //0 0 2 2 2 0 1 1 1
-        s.updateRange(5, 7, new SegmentTreeLP.Toggle());//0 0 2 2 2 1 0 0 1
-        assertEquals(5, s.RSQ(3, 7));
-        assertEquals(2*3 + 1, s.RSQ(0, 5));
-        assertEquals(2*3 + 1*2, s.RSQ(0, 9));
-
     }
 
 
@@ -98,7 +68,7 @@ public class SegmentTreeLPTest {
 
         //Integer[] ar = new Integer[] {1};
 
-        //SegmentTreeLP<Integer> s = new SegmentTreeLP<>(ar, SegmentTreeLP.min(), SegmentTreeLP.sum());
+        //SegmentTreeLP<Integer> s = new SegmentTreeLP<>(ar, SegmentTreeLP.min(), SegmentTreeLP.RSQ());
 
 
         Integer[] ar = new Integer[]{1, 2, 3, -2, 4, 5, -1, 7, 8};
