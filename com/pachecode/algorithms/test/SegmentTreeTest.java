@@ -1,24 +1,18 @@
 package com.pachecode.algorithms.test;
 
-import com.pachecode.algorithms.Dbg;
-import com.pachecode.algorithms.PartitionArray;
-import com.pachecode.algorithms.SegmentTree;
 
-import static org.junit.Assert.*;
-import org.junit.After;
+import com.pachecode.algorithms.SegmentTree;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.OutputStream;
 import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.util.Random;
+
+import static org.junit.Assert.assertEquals;
 
 /**
- * Created by ricardodpsx@gmail.com on 4/01/15.
+ * Created by ricardodpsx@gmail.com on 8/01/15.
  */
 public class SegmentTreeTest {
-
     Integer[][] arrays;
     Integer[] mins, sums;
 
@@ -29,21 +23,12 @@ public class SegmentTreeTest {
 
     }
 
-    @Test
-    public void testLazy(){
-        Integer[] ar = new Integer[]{1, 2, 3, -2, 4, 5, -1, 7, 8};
-
-        SegmentTree s = new SegmentTree(ar, SegmentTree.naturalOrder, SegmentTree.sum());
-
-        out.println( ar[s.search(0, 3)]);
-        out.println(s);
 
 
-        s.update(0, new Integer[]{1,1,1, 1} );
-        s.update(4, new Integer[]{1,1} );
+    /***
+     * Testing Inherit ed Behaviors
+     */
 
-        out.println(s);
-    }
 
     @Test
     public void testSearch(){
@@ -55,15 +40,15 @@ public class SegmentTreeTest {
 
         Integer[] ar = new Integer[]{1, 2, 3, -2, 4, 5, -1, 7, 8};
 
-        SegmentTree s = new SegmentTree(ar, SegmentTree.naturalOrder, SegmentTree.sum());//adding minimal as indexer and sum as aggregator
+        SegmentTree s = new SegmentTree(ar);
 
-        assertEquals(1, ar[ s.search(0, 0)] );
-        assertEquals(8, ar[ s.search(8, 8)] );
-        assertEquals(-2, ar[ s.search(0, 8)] );
-        assertEquals(-2, ar[ s.search(0, 4)] );
-        assertEquals(-1, ar[ s.search(4, 8)] );
-        assertEquals(-2, ar[ s.search(3, 8)] );
-        assertEquals(-1, ar[ s.search(4, 6)] );
+        assertEquals(1, ar[ s.RMQ(0, 0)] );
+        assertEquals(8, ar[ s.RMQ(8, 8)] );
+        assertEquals(-2, ar[ s.RMQ(0, 8)] );
+        assertEquals(-2, ar[ s.RMQ(0, 4)] );
+        assertEquals(-1, ar[ s.RMQ(4, 8)] );
+        assertEquals(-2, ar[ s.RMQ(3, 8)] );
+        assertEquals(-1, ar[ s.RMQ(4, 6)] );
 
     }
 
@@ -77,19 +62,19 @@ public class SegmentTreeTest {
 
         Integer[] ar = new Integer[]{1, 2, 3, -2, 4, 5, -1, 7, 8};
 
-        SegmentTree s = new SegmentTree(ar, SegmentTree.naturalOrder, SegmentTree.sum());//adding minimal as indexer and sum as aggregator
+        SegmentTree s = new SegmentTree(ar);
 
         s.update(3, 4);
 
-        System.out.println(s);
+        //System.out.println(s);
 
-        assertEquals(-1, ar[ s.search(0, 8)] );
-        assertEquals( 1, ar[ s.search(0, 4)] );
-        assertEquals(-1, ar[ s.search(4, 8)] );
+        assertEquals(-1, ar[ s.RMQ(0, 8)] );
+        assertEquals( 1, ar[ s.RMQ(0, 4)] );
+        assertEquals(-1, ar[ s.RMQ(4, 8)] );
 
         s.update(8, -10);
-        assertEquals(-10, ar[ s.search(0, 8)] );
-        assertEquals(-10, ar[ s.search(4, 8)] );
+        assertEquals(-10, ar[ s.RMQ(0, 8)] );
+        assertEquals(-10, ar[ s.RMQ(4, 8)] );
 
     }
 
@@ -98,14 +83,13 @@ public class SegmentTreeTest {
 
         Integer[] ar = new Integer[]{1, 1, 1, 1, 2, 2, 2, 2, 2};
 
-        SegmentTree s = new SegmentTree(ar, SegmentTree.naturalOrder, SegmentTree.sum());
+        SegmentTree s = new SegmentTree(ar);
 
-
-        assertEquals(1*4 + 2*5 , s.aggregation(0, 8) );
-        assertEquals(1*4 , s.aggregation(0, 3) );
-        assertEquals(2*5 , s.aggregation(4, 8) );
-        assertEquals(1 + 2 , s.aggregation(3, 4) );
-        assertEquals(1*2 + 2*2 , s.aggregation(2, 5) );
+        assertEquals(1 * 4 + 2 * 5, s.RSQ(0, 8));
+        assertEquals(1*4 , s.RSQ(0, 3) );
+        assertEquals(2*5 , s.RSQ(4, 8) );
+        assertEquals(1 + 2 , s.RSQ(3, 4) );
+        assertEquals(1*2 + 2*2 , s.RSQ(2, 5) );
     }
 
     @Test
@@ -113,17 +97,17 @@ public class SegmentTreeTest {
 
         Integer[] ar = new Integer[]{1, 1, 1, 1, 2, 2, 2, 2, 2};
 
-        SegmentTree s = new SegmentTree(ar, SegmentTree.naturalOrder, SegmentTree.sum());
+        SegmentTree s = new SegmentTree(ar);
 
         s.update(4, 0); // {1, 1, 1, 1, 0, 2, 2, 2, 2};
         //System.out.println(s);
 
-        assertEquals(0, s.aggregation(4, 4));
-        assertEquals(1 * 4 + 2*4 , s.aggregation(0, 8) );
-        assertEquals(1*4 , s.aggregation(0, 3) );
-        assertEquals(2*4 , s.aggregation(4, 8) );
-        assertEquals(1 , s.aggregation(3, 4) );
-        assertEquals(1*2 + 1*2 , s.aggregation(2, 5) );
+        assertEquals(0, s.RSQ(4, 4));
+        assertEquals(1 * 4 + 2*4 , s.RSQ(0, 8) );
+        assertEquals(1*4 , s.RSQ(0, 3) );
+        assertEquals(2*4 , s.RSQ(4, 8) );
+        assertEquals(1 , s.RSQ(3, 4) );
+        assertEquals(1*2 + 1*2 , s.RSQ(2, 5) );
 
 
     }
@@ -131,23 +115,23 @@ public class SegmentTreeTest {
     @Test
     public void test3SizeArray() {
         Integer[] ar = new Integer[]{1, 2, 3};
-        SegmentTree s = new SegmentTree(ar, SegmentTree.naturalOrder, SegmentTree.sum());//adding minimal as indexer and sum as aggregator
+        SegmentTree s = new SegmentTree(ar);
 
-        assertEquals(6,  s.aggregation(0, 2) );
-        assertEquals(3, s.aggregation(0, 1) );
+        assertEquals(6,  s.RSQ(0, 2) );
+        assertEquals(3, s.RSQ(0, 1) );
 
-        assertEquals(1, ar[ s.search(0, 2) ] );
-        assertEquals(5, s.aggregation(1, 2) );
+        assertEquals(1, ar[ s.RMQ(0, 2) ] );
+        assertEquals(5, s.RSQ(1, 2) );
 
         s.update(1, 3);// {1, 3, 3 }
 
-        assertEquals(1, ar[  s.search(0, 2)] );
-        assertEquals(6,  s.aggregation(1, 2) );
-        assertEquals(7, s.aggregation(0, 2) );
+        assertEquals(1, ar[  s.RMQ(0, 2)] );
+        assertEquals(6,  s.RSQ(1, 2) );
+        assertEquals(7, s.RSQ(0, 2) );
 
         s.update(2, 2); // {1, 3, 2 }
-        assertEquals(6, s.aggregation(0, 2) );
-        assertEquals(4,  s.aggregation(0, 1) );
+        assertEquals(6, s.RSQ(0, 2) );
+        assertEquals(4,  s.RSQ(0, 1) );
 
 
     }
@@ -155,70 +139,45 @@ public class SegmentTreeTest {
     @Test
     public void test1SizeArray() {
         Integer[] ar = new Integer[]{1};
-        SegmentTree s = new SegmentTree(ar, SegmentTree.naturalOrder, SegmentTree.sum());//adding minimal as indexer and sum as aggregator
+        SegmentTree s = new SegmentTree(ar);
 
-        assertEquals(1,  s.aggregation(0, 0) );
-        assertEquals(1, ar[ (int) s.search(0, 0)] );
+        assertEquals(1,  s.RSQ(0, 0) );
+        assertEquals(1, ar[ (int) s.RMQ(0, 0)] );
 
         s.update(0, 3);
 
-        assertEquals(3, s.aggregation(0, 0) );
-        assertEquals(3, ar[ (int) s.search(0, 0)] );
+        assertEquals(3, s.RSQ(0, 0) );
+        assertEquals(3, ar[ (int) s.RMQ(0, 0)] );
 
     }
 
     @Test
     public void test2SizeArray() {
         Integer[] ar = new Integer[]{1, 2};
-        SegmentTree s = new SegmentTree(ar, SegmentTree.naturalOrder, SegmentTree.sum());//adding minimal as indexer and sum as aggregator
+        SegmentTree s = new SegmentTree(ar);
 
-        assertEquals(3, s.aggregation(0, 1) );
-        assertEquals(2,s.aggregation(1, 1) );
+        assertEquals(3, s.RSQ(0, 1) );
+        assertEquals(2,s.RSQ(1, 1) );
 
 
-        assertEquals(1, ar[ (int) s.search(0, 1)] );
-        assertEquals(2, ar[ (int) s.search(1, 1)] );
+        assertEquals(1, ar[ (int) s.RMQ(0, 1)] );
+        assertEquals(2, ar[ (int) s.RMQ(1, 1)] );
 
         s.update(0, 3);
 
-        assertEquals(3, s.aggregation(0, 0));
-        assertEquals(5,  s.aggregation(0, 1) );
-        assertEquals(2, ar[(int) s.search(0, 1)] );
+        assertEquals(3, s.RSQ(0, 0));
+        assertEquals(5,  s.RSQ(0, 1) );
+        assertEquals(2, ar[(int) s.RMQ(0, 1)] );
 
     }
 
-    @Test
-    public void testRangeUpdate(){
-        Integer[] ar = new Integer[]{0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 
-        SegmentTree s = new SegmentTree(ar, SegmentTree.naturalOrder, SegmentTree.sum());
-
-        s.update(0, new Integer[]{1,1,1, 1} );
-        s.update(4, new Integer[]{1,1} );
-
-
-        out.println(s);
-
-        assertEquals(5, (Integer) s.aggregation(0, 4) );
-        out.println(s);
-
-        s.update(7, new Integer[]{2, 2} );
-
-        assertEquals(0, ar[ (Integer) s.search(6, 8) ] );
-
-        s.update(0, new Integer[]{0, 1, 2, 3, 4, 5, 6, 7, 8 } );
-
-        out.println(s);
-        assertEquals(0, ar[ (Integer) s.search(0, 5) ] );
-        assertEquals(5, ar[ (Integer) s.search(5, 8) ] );
-
-    }
 
     public static void main(String args[]) {
         Integer[] ar = new Integer[]{1, 3, 45, 2, 13, 40, 100, 1, 32};
 
-        SegmentTree s = new SegmentTree(ar, SegmentTree.naturalOrder, SegmentTree.sum());//adding minimal as indexer and sum as aggregator
+        SegmentTree s = new SegmentTree(ar);
 
         out.println(s);
 
@@ -227,9 +186,10 @@ public class SegmentTreeTest {
         out.println();
         out.println(s);
 
-        out.println(ar[s.search(1, 5)]);
+        out.println(ar[s.RMQ(1, 5)]);
 
         out.close();
 
     }
+
 }

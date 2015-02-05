@@ -1,604 +1,231 @@
 package com.pachecode.algorithms;
 
-import java.util.Comparator;
+/**
+ * Created by ricardodpsx@gmail.com on 1/02/15.
+ *
+ * SegmentTree with Lazy Querying
+ *
+ *
+ */
+
 import java.util.Stack;
 
 /**
- * Created by ricardodpsx@gmail.com on 3/01/15.
- *
- * Data Structure to perform fast dynamic range queries
- *
+ * Created by ricardodpsx@gmail.com on 31/01/15.
  */
-public class SegmentTree {
-
+public class SegmentTree{
     Node root;
+    Integer[] array;
 
 
+    public static void main(String args[]){
+        SegmentTree st = new SegmentTree(new Integer[]{1,2,-4,8,1,3,4,2,1});
+        System.out.println(st.RMQ(0, 5));
+        System.out.println(st.RSQ(0, 3));
+        System.out.println(st);
 
-    //Default searchComparator
-    Comparator searchComparator = null;
-    Aggregator aggregator = null;
-    PartitionArray array;
+        st.update(0,new Integer[]{0,0});
+        System.out.println(st);
+    }
 
-
-    public SegmentTree(PartitionArray array, Comparator searchComparator,  Aggregator aggregator){
-        this.searchComparator = searchComparator;
-        this.aggregator = aggregator;
+    public SegmentTree(Integer[] array) {
+        root = new Node(new PartitionArray<Integer>(array));
         this.array = array;
-        root = new Node(array); //Build the segment tree
     }
 
-    protected SegmentTree() {
-
+    public void update(int pos, int value){
+        update(pos, new Integer[]{value});
     }
+    public void update(int from, Integer[] a){
 
-    public SegmentTree(Comparable[] array, Comparator searchComparator,  Aggregator aggregator){
-        this(new PartitionArray(array), searchComparator, aggregator);
-    }
-
-    public SegmentTree(Comparable[] array){
-        this(new PartitionArray(array), naturalOrder, sum());
-    }
-    public SegmentTree(PartitionArray array){
-        this( array , naturalOrder, sum());
-    }
-
-
-
-    public int search(int from, int to) {
-        assert from <= to;
-        return search(root, from, to);
-    }
-
-    protected int search(Node n, int from, int to) {
-
-        /*
-            if the node interval is contained on our interval, it is a candidate so
-            return its index
-         */
-        if(from <= n.from() && to >= n.to()) {
-            return n.getSelection();
+        //Updating the array
+        for(int i =0; i < a.length; i++){
+            array[from + i ] = a[i];
         }
 
-        //Do not search getRight/getLeft if its only one node and is not inside the interval
-        if(n.size() == 1)
-            return -1;
+        //Invalidating all the affected ranges
+        update(root, from, from + a.length - 1);
 
-        int indLeft = -1, indRight = -1;
-        /**
-         * If the getLeft interval intercepts and starts before from,
-         * searchComparator to the getLeft
-         */
-        if( from <= n.leftTo() )
-            indLeft = search(n.getLeft(), from, to);
+    }
+    void update(Node node, int from, int to){
 
         /**
-         * if the getRight interval intersects and finishes after to
-         * searchComparator to the getRight
-         */
-        if( to >= n.rightFrom() )
-            indRight = search(n.getRight(), from, to);
-
-
-        if(indLeft == - 1) return indRight;
-        else if(indRight == - 1) return  indLeft;
-
-
-        return select(indLeft, indRight);
-    }
-
-    public Object aggregation(int from, int to) {
-        assert from <= to;
-        return aggregation(root, from, to);
-    }
-
-    protected Object aggregation(Node n, int from, int to) {
-
-        /*
-            if the node interval is  inside [from, to] return its index
-         */
-        if(from <= n.from() && to >= n.to()) {
-            return n.getAggregation();
-        }
-        //else:
-        //Do not search getRight/getLeft if its only one node and is not inside the interval
-        if(n.size() == 1)
-            return null;
-
-
-        Object leftAgg = null, rightAgg = null;
-
-        // If the search-interval intersects getLeft-subArray get the aggregation of it
-        if( from <= n.leftTo() )
-            leftAgg = aggregation(n.getLeft(), from, to);
-
-        // If the search-interval intersects getRight-subArray get the aggregation of it
-        if( to >= n.rightFrom() )
-            rightAgg = aggregation(n.getRight(), from, to);
-
-
-        if(leftAgg == null) return rightAgg;
-        else if(rightAgg == null) return  leftAgg;
-        //else
-        return aggregator.run( rightAgg, leftAgg );
-    }
-
-
-
-    //Updating with Different values
-    public void update(int from, Object[] values) {
-        for(int i = 0; i < values.length; i++) {
-            array.set( from + i, values[i]);
-        }
-        update(root, from , values);
-    }
-
-    //Update index i with value val and perform indexing of that line and indexes
-    public void update(int i, Object val) {
-        update(i, new Object[]{val});
-    }
-
-
-    public void update(Node n, int from, Object[] values) {
-        //n.ind =  searchComparator.compare(n.subArray.getReal(n.ind), val) <= 0 ? root.subArray.getReal(n.ind): val ;
-
-        int to = from + values.length - 1;
-
-        /** If the node range is inside the Updating range
-         * We do not want to recurse many more and We don't want to use such useless memory
-         */
-        if(n.from() >= from && n.to() <= to ) {
-            n.invalidate();
-
-            //This lines automatically frees the reference, not sure how good idea it is but keep the structure at is minimun space
-            //Can be removed without problems
-            n.unsetRight();
-            n.unsetLeft();
-
-            return;
-        }
-
-        //1) We need to change the initial value first from bot to top, see 2
-        //Here we are in bot
-        if(n.size() == 1) {
-            n.update();
-            return;
-        }
-
-
-
-        //If [from, to] affects  the getRight or getLeft interval, update them
-        if( n.rightExists() && ( from <= n.rightFrom() && to >= n.rightFrom()   //  (.[..)..] or (.[...]..)
-                || from >= n.rightFrom() && from <= n.rightTo() ) ) // [.(..]..) or [..(..)..]
-        {
-            update(n.getRight(), from, values);
-        }
-
-        if( n.leftExists() && ( from <= n.leftFrom() && to >= n.leftFrom()   //  (.[..)..] or (.[...]..)
-                || from >= n.leftFrom() && from <= n.leftTo() ) ) // [.(..]..) or [..(..)..]
-        {
-            update(n.getLeft(), from, values);
-        }
-        //2) Invalidating aggregation and selection to force further lazy update
-        if(n.size() > 1) {
-            n.invalidate();
-        }
-
-    }
-
-
-    int select(int leftIndex, int rightIndex){
-        Object leftVal = array.get(leftIndex);
-        Object rightVal = array.get(rightIndex);
-
-        return searchComparator.compare(leftVal, rightVal) <= 0 ?  leftIndex : rightIndex;
-    }
-
-    class IntegerSegmentTree extends SegmentTree{
-
-        public IntegerSegmentTree(PartitionArray<Integer> array) {
-            this.searchComparator = naturalOrder;
-            this.aggregator = sum();
-            this.array = array;
-            root = new IntegerNode(array); //Build the segment tree
-        }
-
-        public IntegerSegmentTree(Integer[] array) {
-            this(new PartitionArray<Integer>(array));
-        }
-
-        @Override
-        protected Object aggregation(Node n, int from, int to) {
-            IntegerNode ni = (IntegerNode) n;
-
-            //If search is inside one node with pending value you can infer
-            if(ni.hasPending() && from >= n.from() && to <= n.to()  ) {
-                return  ni.pending* (to - from + 1);
-            }
-
-            return super.aggregation(n, from, to);
-        }
-
-        @Override
-        protected int search(Node n, int from, int to) {
-            IntegerNode ni = (IntegerNode) n;
-
-            //If search is inside one node with pending value you can infer
-            if(ni.hasPending() && from >= n.from() && to <= n.to()  ) {
-                return n.getSelection();
-            }
-
-            return super.search(n, from, to);
-        }
-
+         * As this range is intersected by the update-range
+         * Min and Sum are no longer valid so We need to invalidate them.
+         * We want to keep the node anyway because some of its children may have indexed information
+         **/
+       node.invalidate();
 
         /**
-         * Update Function with Lazy Top-Bottom propagation
-         * @param from
-         * @param to
-         * @param value
+         *  If the left or right arrays are contained inside the update-range We destroy them
+         *  becouse all of its children will have invalid indexed data so they are a waste of memory
          */
-        public void update(int from,int to, int value) {
-            update((IntegerNode) root, from, to, value);
+        if(node.left != null && contains(from, to, node.leftFrom(), node.leftTo()  )) {
+            node.left = null;
         }
 
-        public void update(Node n, int from, Object[] values) {
-
-        /*The Main update has priority over the
-        Top-Bottomm propagation that may happen above so We update it*/
-
-            if(n.size() == 1) {
-
-                array.set( n.from() , values[ n.from()  - from ] );
-                n.update();
-                return;
-            }
-
-            //n.ind =  searchComparator.compare(n.subArray.getReal(n.ind), val) <= 0 ? root.subArray.getReal(n.ind): val ;
-            if(n.size() > 1) { //Propagates before it loses the information when invalidated
-                IntegerNode ni = (IntegerNode) n;
-                ni.propagate();
-            }
-
-            super.update(n, from, values);
+        if(node.right != null && contains(from, to, node.rightFrom(), node.rightTo()  )) {
+            node.right = null;
         }
 
-        //We can take advantage of Lazy Top-Bottom Propagation when Working with Numbers
-        private void update(IntegerNode n, int from, int to, int value) {
-            //n.ind =  searchComparator.compare(n.subArray.getReal(n.ind), val) <= 0 ? root.subArray.getReal(n.ind): val ;
 
-            //If the node range is inside the Updating range
-            if(n.from() >= from && n.to() <= to ) {
-                n.setPending(value);
-
-                return;
-            }
-
-            if(n.size() > 1) { //Propagates before it loses the information when invalidated
-                n.propagate();
-            }
-
-            //You dont need to update if you are not changing the value
-            if(n.hasPending() && n.pending == value) {
-
-                return;
-            }
-
-            //If [from, to] affects  the getRight or getLeft interval, update them
-            if(  from <= n.rightFrom() && to >= n.rightFrom()   //  (.[..)..] or (.[...]..)
-                    || from >= n.rightFrom() && from <= n.rightTo()  ) // [.(..]..) or [..(..)..]
-            {
-                update( (IntegerNode) n.getRight(), from, to, value);
-            }
-
-            if( from <= n.leftFrom() && to >= n.leftFrom()   //  (.[..)..] or (.[...]..)
-                    || from >= n.leftFrom() && from <= n.leftTo()  ) // [.(..]..) or [..(..)..]
-            {
-                update((IntegerNode) n.getLeft(), from, to, value);
-            }
-
-            //2) Invalidating aggregation and selection to force further lazy update
-            if(n.size() > 1) {
-                n.invalidate();
-            }
-
+        //If the left or right are intersected by the query-range We recurse into them
+        if( node.left != null && intersects(from, to, node.leftFrom(), node.leftTo()) ){
+            update(node.left(), from, to);
         }
 
-        class IntegerNode extends Node{
-
-            //Last Value pending for propagation
-            Integer pending = null;
-
-            private boolean propagatedRight = true;
-            private boolean propagatedLeft= true;
-
-
-            public boolean hasPending(){
-                return !propagatedRight && !propagatedLeft  ;
-            }
-
-            void setPending(Integer value) {
-
-                //all the range is changing so all the values are the same
-                setAggregation(size() * value);
-                setSelection(from());
-
-                subArray.set(0, value);
-
-                //Now We know the changes needs to be propagated when required
-                pending = value;
-                propagatedRight = false;
-                propagatedLeft = false;
-
-                unsetLeft();
-                unsetRight();
-            }
-
-            void propagate(){
-                propagateLeft();
-                propagateRight();
-            }
-
-
-            //Do propagations only when and array inside you changes
-            void propagateLeft(){
-                if(size() == 1) return;
-
-                if(!propagatedLeft)
-                    ((IntegerNode) super.getLeft()).setPending(pending);
-
-                propagatedLeft = true;
-            }
-
-
-            void propagateRight(){
-
-                if(size() == 1) return;
-
-                if(!propagatedRight)
-                    ((IntegerNode) super.getRight()).setPending(pending);
-
-                propagatedRight = true;
-            }
-
-            @Override
-            void invalidate() {
-
-                //If the range is invalidated it also means that it's not capable of infer anything
-                //So We mark it as if there is nothing to propagate
-                propagatedRight = true;
-                propagatedLeft = true;
-
-
-                super.invalidate();
-            }
-
-
-            @Override
-            Node getRight() {
-                IntegerNode n = (IntegerNode) super.getRight();
-
-                //If has pending changes propagate them getRight
-                propagateRight();
-
-                return n;
-            }
-
-
-
-            @Override
-            Node getLeft() {
-                IntegerNode n = (IntegerNode) super.getLeft();
-
-                propagateLeft();
-
-                return n;
-            }
-
-            @Override
-            Node create(PartitionArray part){
-                return new IntegerNode(part);
-            }
-
-
-
-            IntegerNode(PartitionArray subArray) {
-                super(subArray);
-            }
-
-            @Override
-            public String toString(){
-                return super.toString() + "| pending: " + hasPending();
-            }
-
+        if( node.right != null &&  intersects(from, to, node.rightFrom(), node.rightTo()) ){
+            update(node.right(), from, to);
         }
+
+
     }
 
+    public int RMQ(int from, int to) {
+        return RMQ(root, from, to);
+    }
 
-    class Node{
-
-        PartitionArray subArray;
-        Node left = null, right = null;
-
-
+    private int RMQ(Node node, int from, int to){
 
 
-        private Object aggregation = null; //Aggregation, The result of the aggregation
+        //If array is inside range We have our answer
+        if( node.from() >= from && node.to() <= to ){
+            return node.getMin();
+        }
 
-        //Index, Here We store the subArray indexed element
-        private int selection = -1;
+        int leftMin = -1;
+        if( intersects(from, to, node.leftFrom(), node.leftTo()) ){
+            leftMin = RMQ(node.left(), from, to);
+        }
 
+        int rightMin = -1;
+        if(  intersects(from, to, node.rightFrom(), node.rightTo()) ){
+            rightMin = RMQ(node.right(), from, to);
+        }
 
+        if(rightMin == -1)
+            return leftMin;
 
-        Node(PartitionArray subArray){
-            this.subArray = subArray;
+        if(leftMin == -1)
+            return rightMin;
+
+        return  array[ leftMin ] <= array[rightMin] ? leftMin : rightMin;
+    }
+
+    public int RSQ(int from, int to){
+        return RSQ(root, from ,to);
+    }
+
+    private int RSQ(Node node, int from, int to) {
+        //If array is inside range We have our answer
+        if( node.from() >= from && node.to() <= to ){
+            return node.getSum();
         }
 
 
-        boolean leftExists() {
-            return left != null;
+        Integer leftSum = 0;
+        if( intersects(from, to, node.leftFrom(), node.leftTo()) ){
+            leftSum = RSQ(node.left(), from, to);
         }
-        Node getLeft() {
 
-            if(left == null && subArray.size() > 1) left = create(subArray.left());
+        int rightSum = 0;
+        if(  intersects(from, to, node.rightFrom(), node.rightTo()) ){
+            rightSum = RSQ(node.right(), from, to);
+        }
+
+        return  rightSum + leftSum;
+    }
+
+    //Inclusive intersection
+    boolean intersects(int from1, int to1, int from2, int to2 ){
+        return from1 <= from2 && to1 >=from2   //  (.[..)..] or (.[...]..)
+                || from1 >= from2 && from1 <= to2 ; // [.(..]..) or [..(..)..
+    }
+
+    //Test if the range1 contains range2
+    boolean contains(int from1, int to1, int from2, int to2 ) {
+        return from2 >= from1 && to2 <= to1;
+    }
+
+    private class Node {
+
+        Integer min = null;
+        Integer sum = null;
+        Node left, right;
+
+        PartitionArray<Integer> pArray;
+        Node(PartitionArray<Integer> pArray) {
+            this.pArray = pArray;
+
+        }
+
+        void invalidate(){
+            min = null;
+            sum = null;
+        }
+
+        Node left(){
+            if(left == null) left = new Node(pArray.left());
             return left;
         }
-        int leftFrom(){
-            return subArray.leftFrom();
-        }
-
-        int leftTo(){
-
-            return leftFrom() + subArray.leftSize() -1;
-        }
-
-        void unsetLeft() {
-            this.left = null;
-        }
-
-
-        public boolean rightExists() {
-            return right != null;
-        }
-        Node getRight() {
-            if(right == null && subArray.size() > 1) right = create(subArray.right());
+        Node right(){
+            if(right == null ) right = new Node(pArray.right());
             return right;
         }
 
-        void unsetRight() {
-            this.right = null;
+        int size(){ return pArray.size(); }
+        int from(){ return pArray.getFrom();  }
+        int leftFrom(){ return pArray.leftFrom();}
+        int rightFrom() {   return pArray.rightFrom();   }
+        int to(){ return pArray.getTo();  }
+        int leftTo(){ return pArray.leftTo();   }
+        int rightTo(){ return pArray.rightTo();  }
+
+        //Recurse over its childs to get the min
+        void update(){
+
+            int posLeft = left().getMin();
+            int posRight = right().getMin();
+
+            min = (array[posLeft] <= array[posRight]) ? posLeft: posRight;
+
+            sum = left().getSum() + right().getSum();
+
         }
 
-        Node create(PartitionArray part){
-            return new Node(part);
+        int getSum(){
+            if(pArray.size() == 1) {
+                return sum = pArray.get(0);
+            }
+            if(sum == null) update();
+
+            return sum;
         }
 
+        int getMin(){
 
-        int rightFrom(){
-            return subArray.rightFrom();
-        }
-        int rightTo(){
-            return rightFrom() + subArray.rightSize() -1;
-        }
-
-        void invalidate() {
-            selection = -1;
-            aggregation = null;
-        }
-
-
-        void setSelection(int sel){
-            this.selection = sel;
-        }
-
-        int getSelection() {
-            if( selection == -1 )
-                this.update();
-
-            return selection;
-        }
-
-        void setAggregation(Object ag){
-            this.aggregation = ag;
-        }
-
-        Object getAggregation(){
-            if( aggregation == null )
-                this.update();
-
-            return aggregation;
-        }
-
-        void update() {
-            if(subArray.size() > 1) {
-
-                selection =  select(getLeft().getSelection(), getRight().getSelection());
-
-                aggregation = aggregator.run(getLeft().getAggregation(), getRight().getAggregation());
-
-            } else{
-                //For indexing operations We start with the global index of the unit
-                selection = subArray.getFrom();
-
-                // For aggregation operations we start with the value of the unit
-                aggregation = aggregator.init(subArray.get(0));
+            if(pArray.size() == 1) {
+                return min = pArray.getFrom();
+            }
+            //If min is not indexed it has to get it
+            if(min == null) {
+                update();
             }
 
-        }
-
-
-        int size(){
-           return subArray.size();
-        }
-
-
-        /**
-         * @return The value of the index in this interval.
-         */
-        Object val() {
-            return selection!= -1 ? subArray.getReal(selection) : null;
-        }
-
-        int from(){
-            return subArray.getFrom();
-        }
-
-        int to(){
-            return subArray.getTo();
+            return min;
         }
 
 
         @Override
         public String toString() {
-            return String.format("i: [%d, %d] => %s | index = %s, val = %s | aggregation: %s ",
-                    subArray.getFrom(), subArray.getTo(),
-                    subArray.toString(),
-                    selection,
-                    val(),
-                    aggregation
+            return String.format("(%d, %d) => %s | Min: %s | Sum: %s",
+                    pArray.getFrom(), pArray.getTo(),
+                    pArray.toString(),
+                    min != null? array[min]: "null",
+                    sum != null? sum: "null"
             );
         }
-
-
     }
-
-    public static final Comparator<Comparable> naturalOrder = new Comparator<Comparable>() {
-        @Override
-        public int compare(Comparable o1, Comparable o2) {
-            return o1.compareTo(o2);
-        }
-    };
-
-
-
-
-
-    public static abstract  class Aggregator{
-
-        public Object init(Object a ){
-            return a;
-        }
-
-        public  abstract Object run(Object a, Object b);
-    }
-
-
-
-    /**
-     * For RSQ (Range Sum Query) Fenwick Tree is better
-     * @return
-     */
-    public static Aggregator sum() {
-        return new Aggregator() {
-            @Override
-            public Integer run(Object a, Object b) {
-                int x = (int) a;
-                int y = (int) b;
-                return x + y;
-            }
-        };
-    }
-
 
     @Override
     public String toString() {
@@ -623,9 +250,4 @@ public class SegmentTree {
 
         return  out.toString();
     }
-
-
-
-
-
 }
