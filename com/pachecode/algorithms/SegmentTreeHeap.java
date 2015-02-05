@@ -178,17 +178,7 @@ public class SegmentTreeHeap {
         int size(){
             return to - from + 1;
         }
-        public String toString(){
-            return "RSQ: " + sum + "(" + from + ", " + to + ") " + pendingVal;
-        }
 
-
-    }
-
-    @Override
-    public  String toString(){
-
-        return Arrays.toString(heap);
     }
 
 }

@@ -42,8 +42,6 @@ public class SegmentTreeHeapTest {
 
         SegmentTreeHeap s = new SegmentTreeHeap(ar);
 
-        out.println( s);
-
         assertEquals(1, s.RMinQ(0, 0) );
         assertEquals(8,  s.RMinQ(8, 8) );
         assertEquals(-2,  s.RMinQ(0, 8) );
