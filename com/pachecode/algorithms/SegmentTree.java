@@ -51,6 +51,7 @@ public class SegmentTree {
         return array.length;
     }
 
+    //Initialize the Nodes of the Segment tree
     private void build(int v, int from, int size) {
         heap[v] = new Node();
         heap[v].from = from;
@@ -72,7 +73,7 @@ public class SegmentTree {
 
     /**
      * Range Sum Query
-     * <p/>
+     *
      * Time-Complexity: O(log(n))
      */
     public int RSQ(int from, int to) {
@@ -104,7 +105,7 @@ public class SegmentTree {
 
     /**
      * Range Min Query
-     * <p/>
+     * 
      * Time-Complexity: O(log(n))
      */
     public int RMinQ(int from, int to) {
@@ -239,7 +240,7 @@ public class SegmentTree {
      * rmq a b      Range Min Query for the range [a, b]
      * up  a b v    Update the [a,b] portion of the array with value v.
      * exit
-     *
+     * <p/>
      * Example:
      * <<init
      * <<set 1 2 3 4 5 6
@@ -258,24 +259,24 @@ public class SegmentTree {
         SegmentTree st = null;
 
         String cmd = "cmp";
-        while(true){
+        while (true) {
             String[] line = StdIn.readLine().split(" ");
 
-            if(line[0].equals("exit")) break;
+            if (line[0].equals("exit")) break;
 
             int arg1 = 0, arg2 = 0, arg3 = 0;
 
-            if(line.length > 1) {
+            if (line.length > 1) {
                 arg1 = Integer.valueOf(line[1]);
             }
-            if(line.length > 2) {
+            if (line.length > 2) {
                 arg2 = Integer.valueOf(line[2]);
             }
-            if(line.length > 3) {
+            if (line.length > 3) {
                 arg3 = Integer.valueOf(line[3]);
             }
 
-            if( (!line[0].equals("set") && !line[0].equals("init") )&& st == null) {
+            if ((!line[0].equals("set") && !line[0].equals("init")) && st == null) {
                 StdOut.println("Segment Tree not initialized");
                 continue;
             }
