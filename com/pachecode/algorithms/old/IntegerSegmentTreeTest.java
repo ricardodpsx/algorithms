@@ -97,8 +97,8 @@ public class IntegerSegmentTreeTest {
         s.update(0, 3, 100);//100 0 0 2 2 2 2 2 1
         s.update(1, 3, 1);//100 1 1 1 2 2 2 2 1
 
-        assertEquals(1, ar[s.search(0, 3)]);
-        assertEquals(2, ar[s.search(4, 6)]);
+        assertEquals(1, (int)ar[s.search(0, 3)]);
+        assertEquals(2, (int) ar[s.search(4, 6)]);
 
         out.println(s);
 
@@ -123,13 +123,13 @@ public class IntegerSegmentTreeTest {
 
         IntegerSegmentTree s = new IntegerSegmentTree(ar);
 
-        assertEquals(1, ar[ s.search(0, 0)] );
-        assertEquals(8, ar[ s.search(8, 8)] );
-        assertEquals(-2, ar[ s.search(0, 8)] );
-        assertEquals(-2, ar[ s.search(0, 4)] );
-        assertEquals(-1, ar[ s.search(4, 8)] );
-        assertEquals(-2, ar[ s.search(3, 8)] );
-        assertEquals(-1, ar[ s.search(4, 6)] );
+        assertEquals(1,(int) ar[ s.search(0, 0)] );
+        assertEquals(8,(int) ar[ s.search(8, 8)] );
+        assertEquals(-2, (int)ar[ s.search(0, 8)] );
+        assertEquals(-2, (int)ar[ s.search(0, 4)] );
+        assertEquals(-1, (int)ar[ s.search(4, 8)] );
+        assertEquals(-2, (int)ar[ s.search(3, 8)] );
+        assertEquals(-1, (int)ar[ s.search(4, 6)] );
 
     }
 
@@ -149,13 +149,13 @@ public class IntegerSegmentTreeTest {
 
         //System.out.println(s);
 
-        assertEquals(-1, ar[ s.search(0, 8)] );
-        assertEquals( 1, ar[ s.search(0, 4)] );
-        assertEquals(-1, ar[ s.search(4, 8)] );
+        assertEquals(-1,(int) ar[ s.search(0, 8)] );
+        assertEquals( 1,(int) ar[ s.search(0, 4)] );
+        assertEquals(-1, (int)ar[ s.search(4, 8)] );
 
         s.update(8, -10);
-        assertEquals(-10, ar[ s.search(0, 8)] );
-        assertEquals(-10, ar[ s.search(4, 8)] );
+        assertEquals(-10, (int)ar[ s.search(0, 8)] );
+        assertEquals(-10, (int)ar[ s.search(4, 8)] );
 
     }
 
@@ -201,12 +201,12 @@ public class IntegerSegmentTreeTest {
         assertEquals(6,  s.aggregation(0, 2) );
         assertEquals(3, s.aggregation(0, 1) );
 
-        assertEquals(1, ar[ s.search(0, 2) ] );
+        assertEquals(1, (int)ar[ s.search(0, 2) ] );
         assertEquals(5, s.aggregation(1, 2) );
 
         s.update(1, 3);// {1, 3, 3 }
 
-        assertEquals(1, ar[  s.search(0, 2)] );
+        assertEquals(1, (int)ar[  s.search(0, 2)] );
         assertEquals(6,  s.aggregation(1, 2) );
         assertEquals(7, s.aggregation(0, 2) );
 
@@ -223,12 +223,12 @@ public class IntegerSegmentTreeTest {
         IntegerSegmentTree s = new IntegerSegmentTree(ar);
 
         assertEquals(1,  s.aggregation(0, 0) );
-        assertEquals(1, ar[ (int) s.search(0, 0)] );
+        assertEquals(1, (int)ar[ (int) s.search(0, 0)] );
 
         s.update(0, 3);
 
         assertEquals(3, s.aggregation(0, 0) );
-        assertEquals(3, ar[ (int) s.search(0, 0)] );
+        assertEquals(3,(int) ar[ (int) s.search(0, 0)] );
 
     }
 
@@ -241,14 +241,14 @@ public class IntegerSegmentTreeTest {
         assertEquals(2,s.aggregation(1, 1) );
 
 
-        assertEquals(1, ar[ (int) s.search(0, 1)] );
-        assertEquals(2, ar[ (int) s.search(1, 1)] );
+        assertEquals(1,(int) ar[ (int) s.search(0, 1)] );
+        assertEquals(2, (int)ar[ (int) s.search(1, 1)] );
 
         s.update(0, 3);
 
         assertEquals(3, s.aggregation(0, 0));
         assertEquals(5,  s.aggregation(0, 1) );
-        assertEquals(2, ar[(int) s.search(0, 1)] );
+        assertEquals(2, (int)ar[(int) s.search(0, 1)] );
 
     }
 

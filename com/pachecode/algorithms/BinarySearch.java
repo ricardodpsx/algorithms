@@ -1,6 +1,7 @@
 package com.pachecode.algorithms;
 
 import java.io.PrintWriter;
+import java.util.Comparator;
 
 /**
  * Clean Implementation of Binary Search
@@ -9,108 +10,81 @@ import java.io.PrintWriter;
 public class BinarySearch {
 
     /**
-     *
-     * @param array The sorted subArray
+     * @param array  The sorted subArray
      * @param search The searchComparator
      * @param <T>
      * @return position of the searchComparator or -1 if it doesn't exists
      */
-    public static<T extends Comparable> int search(T[] array, T search){
+    public static int search(Comparable[] array, Comparable search) {
 
-        return search(new PartitionArray<Comparable>(array), search);
+        return search(array, 0, array.length - 1, search);
     }
 
-    private static<T extends Comparable> Integer search(PartitionArray<T> array, T search){
+    static int search(Comparable[] array, int from, int to, Comparable search) {
 
-        if(array.size() == 0) return -1;
+        if (to - from < 0) return -1;
+        int mid = (from + to) / 2;
+        Comparable val = array[mid];
 
-        T val= array.pivot().get(0);
-
-        if(val.compareTo(search) == 0)
-            return array.pivot().getFrom();
-        else if(search.compareTo(val) < 0 )
-            return search(array.leftWithPivot(), search);
-        else if(search.compareTo(val) > 0)
-            return search(array.rightWithPivot(), search);
+        if (val.compareTo(search) == 0) return mid;
+        else if (search.compareTo(val) < 0) return search(array, from, mid - 1, search);
+        else if (search.compareTo(val) > 0) return search(array, mid + 1, to, search);
 
         return -1;
     }
 
 
-    public static<T extends Comparable> int ceil(T[] array, T search){
-
-
-        return ceil(new PartitionArray<T>(array), search);
+    public static int ceil(Comparable[] array, Comparable search) {
+        return ceil(array, 0, array.length - 1, search);
     }
 
-    public static<T extends Comparable> int ceil(PartitionArray<T> array, T search){
+    public static int ceil(Comparable[] array, int from, int to, Comparable search) {
 
-        if(array.size() == 0)
-            return - 1;
+        if (to - from < 0)
+            return -1;
 
-        T val = array.pivotVal();
-
-
-        if( search.compareTo(val) == 0 )
-            return array.pivot().getFrom();
-        else if ( val.compareTo( search ) > 0 )
-            return ceil(array.leftWithPivot(), search);
-        else {
-
-            int ind = ceil(array.rightWithPivot(), search);
-
-            if(ind == -1) return array.pivot().getFrom();
-            else
-                return ind;
-
-        }
+        int mid = (from + to) / 2;
+        Comparable val = array[mid];
 
 
+        if (search.compareTo(val) == 0) return mid;
+        else if (val.compareTo(search) > 0) return ceil(array, from, mid - 1, search);
+        //else:
+        int ind = ceil(array, mid + 1, to, search);
+
+        if (ind == -1) return mid;
+        //else
+        return ind;
     }
 
-    /**
-     *
-     * @param array
-     * @param search
-     * @param <T>
-     * @return the strictly bigger item index searchComparator <= item  floor(1.5) = 2
-     */
-    public static<T extends Comparable> int floor(T[] array, T search){
-
-        return floor(new PartitionArray<T>(array), search);
+    public static int floor(Comparable[] array, Comparable search) {
+        return floor(array, 0, array.length - 1, search);
     }
 
-    public static<T extends Comparable> int floor(PartitionArray<T> array, T search){
+    public static int floor(Comparable[]  array, int from, int to, Comparable search) {
 
-        if(array.size() == 0)
-            return - 1;
+        if (to - from < 0)
+            return -1;
 
-        T val = array.pivotVal();
+        int mid = (to + from)/2;
+        Comparable val = array[mid];
 
+        if (search.compareTo(val) == 0)         return mid;
+        else if (val.compareTo(search) < 0)     return floor(array, mid + 1, to, search);
+        //else
 
-        if( search.compareTo(val) == 0 )
-            return array.pivot().getFrom();
-        else if ( val.compareTo( search ) < 0 )
-            return floor(array.rightWithPivot(), search);
-        else {
+        int ind = floor(array, from, mid - 1, search);
 
-            int ind = floor(array.leftWithPivot(), search);
-
-            if(ind == -1)
-                return array.pivot().getFrom();
-            else
-                return ind;
-
-        }
-
+        if (ind == -1)  return mid;
+        else            return ind;
 
     }
-
 
 
     static PrintWriter out = new PrintWriter(System.out, true);
+
     public static void main(String args[]) {
-        Integer[] array = new Integer[]{1,2,3,6,100,101};
+        Integer[] array = new Integer[]{1, 2, 3, 6, 100, 101};
 
 
         out.println(search(array, 100));
@@ -118,7 +92,7 @@ public class BinarySearch {
         out.println(search(array, 0));
 
 
-        Double[] array2 = new Double[]{1d,2d,3d,4d,5d};
+        Double[] array2 = new Double[]{1d, 2d, 3d, 4d, 5d};
 
         out.println("Ceil " + BinarySearch.ceil(array2, 0.));//-1
         out.println("Ceil " + array2[BinarySearch.ceil(array2, 1.5)]);//1

@@ -1,253 +1,329 @@
 package com.pachecode.algorithms;
 
-/**
- * Created by ricardodpsx@gmail.com on 1/02/15.
- *
- * SegmentTree with Lazy Initialization
- *
- *
- */
+import princeton.algs4.stdlib.StdIn;
+import princeton.algs4.stdlib.StdOut;
 
-import java.util.Stack;
+import java.util.Arrays;
 
 /**
- * Created by ricardodpsx@gmail.com on 31/01/15.
+ * The <tt>SegmentTree</tt> class is an structure for efficient search of cummulative data.
+ * It performs  Range Minimum Query and Range Sum Query in O(log(n)) time.
+ * It can be easily customizable to support Range Max Query, Range Multiplication Query etc.
+ * <p/>
+ * Also it has been develop with  <tt>LazyPropagation</tt> for range updates, which means
+ * when you perform update operations over a range, the update process affects the least nodes as possible
+ * so that the bigger the range you want to update the less time it consumes to update it. Eventually those changes will be propagated
+ * to the children and the whole array will be up to date.
+ * <p/>
+ * <p/>
+ * <p/>
+ * Example:
+ * <p/>
+ * SegmentTreeHeap st = new SegmentTreeHeap(new Integer[]{1,3,4,2,1, -2, 4});
+ * st.update(0,3, 1)
+ * In the above case only the node that represents the range [0,3] will be updated (and not their children) so in this case
+ * the update task will be less than n*log(n)
+ *
+ * @Memory-Complexity: O(2 ^ log2(n))
+ * <p/>
  */
-public class SegmentTree{
-    Node root;
-    Integer[] array;
+public class SegmentTree {
 
+    public Node[] heap;
+    int[] array;
+    int size;
 
-    public static void main(String args[]){
-        SegmentTree st = new SegmentTree(new Integer[]{1,2,-4,8,1,3,4,2,1});
-        System.out.println(st.RMQ(0, 5));
-        System.out.println(st.RSQ(0, 3));
-        System.out.println(st);
-
-        st.update(0,new Integer[]{0,0});
-        System.out.println(st);
+    /**
+     * Time-Complexity:  O(n*log(n))
+     *
+     * @param array the Initialization array
+     */
+    public SegmentTree(int[] array) {
+        this.array = Arrays.copyOf(array, array.length);
+        //The max size of this array is about 2 * 2 ^ log2(n) + 1
+        int size = (int) (2 * Math.pow(2.0, Math.floor((Math.log((double) array.length) / Math.log(2.0)) + 1)));
+        heap = new Node[size];
+        build(1, 0, array.length);
     }
 
-    public SegmentTree(Integer[] array) {
-        root = new Node(new PartitionArray<Integer>(array));
-        this.array = array;
+
+    public int size() {
+        return array.length;
     }
 
-    public void update(int pos, int value){
-        update(pos, new Integer[]{value});
-    }
-    public void update(int from, Integer[] a){
+    private void build(int v, int from, int size) {
+        heap[v] = new Node();
+        heap[v].from = from;
+        heap[v].to = from + size - 1;
 
-        //Updating the array
-        for(int i =0; i < a.length; i++){
-            array[from + i ] = a[i];
+        if (size == 1) {
+            heap[v].sum = array[from];
+            heap[v].min = array[from];
+        } else {
+            //Build childs
+            build(2 * v, from, size / 2);
+            build(2 * v + 1, from + size / 2, size - size / 2);
+
+            heap[v].sum = heap[2 * v].sum + heap[2 * v + 1].sum;
+            //min = min of the children
+            heap[v].min = Math.min(heap[2 * v].min, heap[2 * v + 1].min);
+        }
+    }
+
+    /**
+     * Range Sum Query
+     * <p/>
+     * Time-Complexity: O(log(n))
+     */
+    public int RSQ(int from, int to) {
+        return RSQ(1, from, to);
+    }
+
+    private int RSQ(int v, int from, int to) {
+        Node n = heap[v];
+
+        //If you did a range update that contained this node, you can infer the Sum without going down the tree
+        if (n.pendingVal != null && contains(n.from, n.to, from, to)) {
+            return (to - from + 1) * n.pendingVal;
         }
 
-        //Invalidating all the affected ranges
-        update(root, from, from + a.length - 1);
+        if (contains(from, to, n.from, n.to)) {
+            return heap[v].sum;
+        }
 
+        if (intersects(from, to, n.from, n.to)) {
+            propagate(v);
+            int leftSum = RSQ(2 * v, from, to);
+            int rightSum = RSQ(2 * v + 1, from, to);
+
+            return leftSum + rightSum;
+        }
+
+        return 0;
     }
-    void update(Node node, int from, int to){
+
+    /**
+     * Range Min Query
+     * <p/>
+     * Time-Complexity: O(log(n))
+     */
+    public int RMinQ(int from, int to) {
+        return RMinQ(1, from, to);
+    }
+
+    private int RMinQ(int v, int from, int to) {
+        Node n = heap[v];
+
+
+        //If you did a range update that contained this node, you can infer the Min value without going down the tree
+        if (n.pendingVal != null && contains(n.from, n.to, from, to)) {
+            return n.pendingVal;
+        }
+
+        if (contains(from, to, n.from, n.to)) {
+            return heap[v].min;
+        }
+
+        if (intersects(from, to, n.from, n.to)) {
+            propagate(v);
+            int leftMin = RMinQ(2 * v, from, to);
+            int rightMin = RMinQ(2 * v + 1, from, to);
+
+            return Math.min(leftMin, rightMin);
+        }
+
+        return Integer.MAX_VALUE;
+    }
+
+
+    /**
+     * Range Update Operation.
+     * With this operation you can update either one position or a range of positions with a given number.
+     * The update operations will update the less it can to update the whole range (Lazy Propagation).
+     * The values will be propagated lazily from top to bottom of the segment tree.
+     * This behavior is really useful for updates on portions of the array
+     * <p/>
+     * Time-Complexity: O(log(n))
+     *
+     * @param from
+     * @param to
+     * @param value
+     */
+    public void update(int from, int to, int value) {
+        update(1, from, to, value);
+    }
+
+    private void update(int v, int from, int to, int value) {
+
+        //The Node of the heap tree represents a range of the array with bounds: [n.from, n.to]
+        Node n = heap[v];
 
         /**
-         * As this range is intersected by the update-range
-         * Min and Sum are no longer valid so We need to invalidate them.
-         * We want to keep the node anyway because some of its children may have indexed information
-         **/
-       node.invalidate();
-
-        /**
-         *  If the left or right arrays are contained inside the update-range We destroy them
-         *  becouse all of its children will have invalid indexed data so they are a waste of memory
+         * If the updating-range contains the portion of the current Node  We lazily update it.
+         * This means We do NOT update each position of the vector, but update only some temporal
+         * values into the Node; such values into the Node will be propagated down to its children only when they need to.
          */
-        if(node.left != null && contains(from, to, node.leftFrom(), node.leftTo()  )) {
-            node.left = null;
+        if (contains(from, to, n.from, n.to)) {
+            change(n, value);
         }
 
-        if(node.right != null && contains(from, to, node.rightFrom(), node.rightTo()  )) {
-            node.right = null;
+        if (n.size() == 1) return;
+
+        if (intersects(from, to, n.from, n.to)) {
+            /**
+             * Before keeping going down to the tree We need to propagate the
+             * the values that have been temporally/lazily saved into this Node to its children
+             * So that when We visit them the values  are properly updated
+             */
+            propagate(v);
+
+            update(2 * v, from, to, value);
+            update(2 * v + 1, from, to, value);
+
+            n.sum = heap[2 * v].sum + heap[2 * v + 1].sum;
+            n.min = Math.min(heap[2 * v].min, heap[2 * v + 1].min);
         }
-
-
-        //If the left or right are intersected by the query-range We recurse into them
-        if( node.left != null && intersects(from, to, node.leftFrom(), node.leftTo()) ){
-            update(node.left(), from, to);
-        }
-
-        if( node.right != null &&  intersects(from, to, node.rightFrom(), node.rightTo()) ){
-            update(node.right(), from, to);
-        }
-
-
     }
 
-    public int RMQ(int from, int to) {
-        return RMQ(root, from, to);
+    //Propagate temporal values to children
+    private void propagate(int v) {
+        Node n = heap[v];
+
+        if (n.pendingVal != null) {
+            change(heap[2 * v], n.pendingVal);
+            change(heap[2 * v + 1], n.pendingVal);
+            n.pendingVal = null; //unset the pending propagation value
+        }
     }
 
-    private int RMQ(Node node, int from, int to){
+    //Save the temporal values that will be propagated lazily
+    private void change(Node n, int value) {
+        n.pendingVal = value;
+        n.sum = n.size() * value;
+        n.min = value;
+        array[n.from] = value;
 
-
-        //If array is inside range We have our answer
-        if( node.from() >= from && node.to() <= to ){
-            return node.getMin();
-        }
-
-        int leftMin = -1;
-        if( intersects(from, to, node.leftFrom(), node.leftTo()) ){
-            leftMin = RMQ(node.left(), from, to);
-        }
-
-        int rightMin = -1;
-        if(  intersects(from, to, node.rightFrom(), node.rightTo()) ){
-            rightMin = RMQ(node.right(), from, to);
-        }
-
-        if(rightMin == -1)
-            return leftMin;
-
-        if(leftMin == -1)
-            return rightMin;
-
-        return  array[ leftMin ] <= array[rightMin] ? leftMin : rightMin;
-    }
-
-    public int RSQ(int from, int to){
-        return RSQ(root, from ,to);
-    }
-
-    private int RSQ(Node node, int from, int to) {
-        //If array is inside range We have our answer
-        if( node.from() >= from && node.to() <= to ){
-            return node.getSum();
-        }
-
-
-        Integer leftSum = 0;
-        if( intersects(from, to, node.leftFrom(), node.leftTo()) ){
-            leftSum = RSQ(node.left(), from, to);
-        }
-
-        int rightSum = 0;
-        if(  intersects(from, to, node.rightFrom(), node.rightTo()) ){
-            rightSum = RSQ(node.right(), from, to);
-        }
-
-        return  rightSum + leftSum;
-    }
-
-    //Inclusive intersection
-    boolean intersects(int from1, int to1, int from2, int to2 ){
-        return from1 <= from2 && to1 >=from2   //  (.[..)..] or (.[...]..)
-                || from1 >= from2 && from1 <= to2 ; // [.(..]..) or [..(..)..
     }
 
     //Test if the range1 contains range2
-    boolean contains(int from1, int to1, int from2, int to2 ) {
+    private boolean contains(int from1, int to1, int from2, int to2) {
         return from2 >= from1 && to2 <= to1;
     }
 
-    private class Node {
-
-        Integer min = null;
-        Integer sum = null;
-        Node left, right;
-
-        PartitionArray<Integer> pArray;
-        Node(PartitionArray<Integer> pArray) {
-            this.pArray = pArray;
-
-        }
-
-        void invalidate(){
-            min = null;
-            sum = null;
-        }
-
-        Node left(){
-            if(left == null) left = new Node(pArray.left());
-            return left;
-        }
-        Node right(){
-            if(right == null ) right = new Node(pArray.right());
-            return right;
-        }
-
-        int size(){ return pArray.size(); }
-        int from(){ return pArray.getFrom();  }
-        int leftFrom(){ return pArray.leftFrom();}
-        int rightFrom() {   return pArray.rightFrom();   }
-        int to(){ return pArray.getTo();  }
-        int leftTo(){ return pArray.leftTo();   }
-        int rightTo(){ return pArray.rightTo();  }
-
-        //Recurse over its childs to get the min
-        void update(){
-
-            int posLeft = left().getMin();
-            int posRight = right().getMin();
-
-            min = (array[posLeft] <= array[posRight]) ? posLeft: posRight;
-
-            sum = left().getSum() + right().getSum();
-
-        }
-
-        int getSum(){
-            if(pArray.size() == 1) {
-                return sum = pArray.get(0);
-            }
-            if(sum == null) update();
-
-            return sum;
-        }
-
-        int getMin(){
-
-            if(pArray.size() == 1) {
-                return min = pArray.getFrom();
-            }
-            //If min is not indexed it has to get it
-            if(min == null) {
-                update();
-            }
-
-            return min;
-        }
-
-
-        @Override
-        public String toString() {
-            return String.format("(%d, %d) => %s | Min: %s | Sum: %s",
-                    pArray.getFrom(), pArray.getTo(),
-                    pArray.toString(),
-                    min != null? array[min]: "null",
-                    sum != null? sum: "null"
-            );
-        }
+    //check inclusive intersection, test if range1[from1, to1] intersects range2[from2, to2]
+    private boolean intersects(int from1, int to1, int from2, int to2) {
+        return from1 <= from2 && to1 >= from2   //  (.[..)..] or (.[...]..)
+                || from1 >= from2 && from1 <= to2; // [.(..]..) or [..(..)..
     }
 
-    @Override
-    public String toString() {
-        Node n = root;
+    //The Node class represents a partition range of the array.
+    static class Node {
+        int sum;
+        int min;
+        //Here We store the value that will be propagated lazily
+        Integer pendingVal = null;
+        int from;
+        int to;
 
-        Stack<Node> q = new Stack<>();
+        int size() {
+            return to - from + 1;
+        }
 
-        q.push(n);
+    }
 
-        StringBuilder out = new StringBuilder();
-        //Deep First Traversing tree
-        while(!q.isEmpty()) {
-            Node r = q.pop();
+    /**
+     * Read the following commands:
+     * init n v     Initializes the array of size n with all v's
+     * set a b c... Initializes the array  with [a, b, c ...]
+     * rsq a b      Range Sum Query for the range [a, b]
+     * rmq a b      Range Min Query for the range [a, b]
+     * up  a b v    Update the [a,b] portion of the array with value v.
+     * exit
+     *
+     * Example:
+     * <<init
+     * <<set 1 2 3 4 5 6
+     * <<rsq 1 3
+     * >>Sum from 1 to 3 = 6
+     * <<rmq 1 3
+     * >>Min from 1 to 3 = 1
+     * <<input up 1 3
+     * >>[3,2,3,4,5,6]
+     *
+     * @param args
+     */
+    public static void main(String args[]) {
 
-            if(r.right != null) q.add(r.right);
-            if(r.left != null) q.add(r.left);
 
+        SegmentTree st = null;
 
-            out.append(r.toString() + "\n");
+        String cmd = "cmp";
+        while(true){
+            String[] line = StdIn.readLine().split(" ");
+
+            if(line[0].equals("exit")) break;
+
+            int arg1 = 0, arg2 = 0, arg3 = 0;
+
+            if(line.length > 1) {
+                arg1 = Integer.valueOf(line[1]);
+            }
+            if(line.length > 2) {
+                arg2 = Integer.valueOf(line[2]);
+            }
+            if(line.length > 3) {
+                arg3 = Integer.valueOf(line[3]);
+            }
+
+            if( (!line[0].equals("set") && !line[0].equals("init") )&& st == null) {
+                StdOut.println("Segment Tree not initialized");
+                continue;
+            }
+            int array[];
+            switch (line[0]) {
+                case "set":
+                    array = new int[line.length - 1];
+                    for (int i = 0; i < line.length - 1; i++) {
+                        array[i] = Integer.valueOf(line[i + 1]);
+                    }
+
+                    st = new SegmentTree(array);
+                    break;
+                case "init":
+                    array = new int[arg1];
+                    Arrays.fill(array, arg2);
+                    st = new SegmentTree(array);
+
+                    for (int i = 0; i < st.size(); i++) {
+                        StdOut.print(st.RSQ(i, i) + " ");
+                    }
+                    StdOut.println();
+                    break;
+
+                case "up":
+                    st.update(arg1, arg2, arg3);
+                    for (int i = 0; i < st.size(); i++) {
+                        StdOut.print(st.RSQ(i, i) + " ");
+                    }
+                    StdOut.println();
+                    break;
+                case "rsq":
+                    StdOut.printf("Sum from %d to %d = %d%n", arg1, arg2, st.RSQ(arg1, arg2));
+                    break;
+
+                case "rmq":
+                    StdOut.printf("Min from %d to %d = %d%n", arg1, arg2, st.RMinQ(arg1, arg2));
+                    break;
+
+                default:
+                    StdOut.println("Invalid command");
+
+            }
 
         }
 
-        return  out.toString();
+
+        StdOut.close();
     }
+
 }

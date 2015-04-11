@@ -10,7 +10,7 @@ import java.util.Arrays;
  * TODO: Do your own version
  * Find Next_permutation like in C++
  */
-public class NextPermutation <T extends Comparable<T>> {
+public class    NextPermutation <T extends Comparable<T>> {
 
     private static void printPermutations( Comparable[] c ) {
         System.out.println( Arrays.toString(c) );

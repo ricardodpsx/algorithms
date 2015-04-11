@@ -27,7 +27,7 @@ public class PartitionArrayTest {
         array = new PartitionArray<>(new Integer[]{1,2,3,4,5});
         assertEquals(array.getArray(), new Integer[]{1, 2, 3, 4, 5});
         assertEquals(5, array.size());
-        assertEquals(2, array.get(1));
+        assertEquals(2, (int) array.get(1));
 
         array = new PartitionArray<>(20);
 
@@ -35,7 +35,7 @@ public class PartitionArrayTest {
 
         array.set(15, 99);
 
-        assertEquals(array.get(15), 99);
+        assertEquals((int) array.get(15), 99);
 
 
         try {
@@ -47,8 +47,8 @@ public class PartitionArrayTest {
         }
 
         array = new PartitionArray<>(new Integer[]{1, 2, 3, 4, 5}, 2, 1); // [3]
-        assertEquals(1, array.size());
-        assertEquals(3, array.get(0));
+        assertEquals(1, (int) array.size());
+        assertEquals(3, (int) array.get(0));
 
     }
 
@@ -83,13 +83,13 @@ public class PartitionArrayTest {
     @Test
     public void testAccess(){
 
-        assertEquals(1, array.left().get(0));
-        assertEquals(2, array.left().get(1));
-        assertEquals(2, array.left().size());
+        assertEquals(1, (int) array.left().get(0));
+        assertEquals(2, (int) array.left().get(1));
+        assertEquals(2, (int) array.left().size());
 
-        assertEquals(3, array.right().get(0));
-        assertEquals(5, array.right().get(2));
-        assertEquals(3, array.right().size());
+        assertEquals(3, (int) array.right().get(0));
+        assertEquals(5, (int) array.right().get(2));
+        assertEquals(3, (int) array.right().size());
 
 
         try{
@@ -112,13 +112,13 @@ public class PartitionArrayTest {
     @Test
     public void testSet(){
         array.left().set(0, 100);
-        assertEquals(100, array.get(0));
+        assertEquals(100,(int)  array.get(0));
 
         array.right().set(0, 99);
-        assertEquals(99, array.get(2));
+        assertEquals(99, (int) array.get(2));
 
         array.right().right().set(0, 98);
-        assertEquals(98, array.get(3));
+        assertEquals(98, (int) array.get(3));
 
     }
 
@@ -137,7 +137,7 @@ public class PartitionArrayTest {
 
         assertEquals(3, array2.size());
         assertEquals(array2.getArray(), new Integer[]{2, 3, 4});
-        assertEquals(2, array2.get(0));
+        assertEquals(2,(int)  array2.get(0));
 
     }
 

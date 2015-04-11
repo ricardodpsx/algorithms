@@ -1,57 +1,183 @@
 package com.pachecode.algorithms;
 
+import princeton.algs4.stdlib.StdIn;
+import princeton.algs4.stdlib.StdOut;
+
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
  * Created by ricardodpsx@gmail.com on 4/01/15.
+ * <p/>
+ * In <tt>Fenwick Tree</tt> structure We arrange the array in an smart way to perform efficient <em>range queries and updates</em>.
+ * The key point is this: In a fenwick array, each position "responsible" for storing cumulative data of N previous positions (N could be 1)
+ * For example:
+ * array[40] stores: array[40] + array[39] ... + array[32] (8 positions)
+ * array[32] stores: array[32] + array[31] ... + array[1]  (32 positions)
+ * <p/>
+ * <strong>But, how do you know how much positions a given index is "responsible" for?</strong>
+ * <p>
+ * To know the number of items that a given array position 'ind' is responsible for
+ * We should extract from 'ind' the portion up to the first significant one of the binary representation of 'ind'
+ * for example, given ind == 40 (101000 in binary), according to Fenwick algorithm
+ * what We want is to extract 1000(8 in decimal).
+ * </p>
+ * <p/>
+ * <p>
+ * This means that array[40] has cumulative information of 8 array items.
+ * But We still need to know the cumulative data bellow array[40 - 8 = 32]
+ * 32 is  100000 in binnary, and the portion up to the least significant one is 32 itself!
+ * So array[32] has information of 32 items, and We are done!
+ * </p>
+ * <p/>
+ * <p>
+ * So cummulative data of array[1...40] = array[40] + array[32]
+ * Because 40 has information of items from 40 to 32, and 32 has information of items from 32 to  1
+ * </p>
  *
- *  WARNING: This works with 1 indexed subArray!
- *
- * TODO: Unit Testing
+ * Memory-Complexity:  O(n)
  */
 public class FenwickTree {
-    Integer[] array;
+
+    int[] array; //1-indexed array, In this array We save cumulative information to perform efficient range queries and updates
+
     public FenwickTree(int size) {
-        array =  new Integer[size + 1];
-        Arrays.fill(array, 0);
+        array = new int[size + 1];
     }
 
     /**
-     * RSQ (Range Sum Query)
-     * @param a
-     * @return Range Sum from [1, b]
+     * Range Sum query from 1 to ind
+     * ind is 1-indexed
+     *
+     * Time-Complexity:    O(log(n))
      */
-    public Integer rsq(int a) {
-
-        Integer sum = 0;
-        while(a > 0 ) {
-            sum += array[a];
-            a -= a&(-a);
+    public int rsq(int ind) {
+        assert ind > 0;
+        int sum = 0;
+        while (ind > 0) {
+            sum += array[ind];
+            //Extracting the portion up to the first significant one of the binary representation of 'ind' and decrementing ind by that number
+            ind -= ind & (-ind);
         }
 
         return sum;
     }
 
     /**
-     * RSQ (Range Sum Query)
-     * @return Range Sum from [a,b]
+     * Range Sum Query from a to b.
+     * Search for the sum from array index from a to b
+     * a and b are 1-indexed
+     *
+     * Time-Complexity:    O(log(n))
      */
-    public Integer rsq(int a, int b) {
-        assert b >= a;
+    public int rsq(int a, int b) {
+        assert b >= a && a > 0 && b > 0;
 
-        return rsq(b) - (a == 1? 0 : rsq(a - 1));
+        return rsq(b) - rsq(a - 1);
     }
 
-
-    public void update(int k, Integer value) {
-        while(k < array.length ){
-            array[k] += value;
-            k += k&(-k);
+    /**
+     * Update the array at ind and all the affected regions above ind.
+     * ind is 1-indexed
+     *
+     * Time-Complexity:    O(log(n))
+     */
+    public void update(int ind, int value) {
+        assert ind > 0;
+        while (ind < array.length) {
+            array[ind] += value;
+            //Extracting the portion up to the first significant one of the binary representation of 'ind' and incrementing ind by that number
+            ind += ind & (-ind);
         }
     }
 
+    public int size() {
+        return array.length - 1;
+    }
+
+
+    /**
+     * Read the following commands:
+     * init n     Initializes the array of size n all zeroes
+     * set a b c    Initializes the array  with [a, b, c ...]
+     * rsq a b      Range Sum Query for the range [a,b]
+     * up  i v      Update the i position of the array with value v.
+     * exit
+     *
+     * The array is 1-indexed
+     * Example:
+     * <<set 1 2 3 4 5 6
+     * <<rsq 1 3
+     * >>Sum from 1 to 3 = 6
+     * <<rmq 1 3
+     * >>Min from 1 to 3 = 1
+     * <<input up 1 3
+     * >>[3,2,3,4,5,6]
+     *
+     * @param args
+     */
+    public static void main(String args[]) {
+
+
+        FenwickTree ft = null;
+
+        String cmd = "cmp";
+         while(true){
+            String[] line = StdIn.readLine().split(" ");
+
+             if(line[0].equals("exit")) break;
+
+            int arg1 = 0, arg2 = 0;
+
+             if(line.length > 1) {
+                 arg1 = Integer.valueOf(line[1]);
+             }
+             if(line.length > 2) {
+                 arg2 = Integer.valueOf(line[2]);
+             }
+
+             if( (!line[0].equals("set") && !line[0].equals("init") )&& ft == null) {
+                 StdOut.println("FenwickTree not initialized");
+                 continue;
+             }
+
+             switch (line[0]) {
+                 case "init":
+                     ft = new FenwickTree(arg1);
+                     for (int i = 1; i <= ft.size(); i++) {
+                         StdOut.print(ft.rsq(i, i) + " ");
+                     }
+                     StdOut.println();
+                     break;
+                 case "set":
+                     ft = new FenwickTree(line.length - 1);
+                     for (int i = 1; i <= line.length - 1; i++) {
+                         ft.update(i, Integer.valueOf(line[i]));
+                     }
+                     break;
+
+                 case "up":
+                     ft.update(arg1, arg2);
+                     for (int i = 1; i <= ft.size(); i++) {
+                         StdOut.print(ft.rsq(i, i) + " ");
+                     }
+                     StdOut.println();
+                     break;
+                 case "rsq":
+                     StdOut.printf("Sum from %d to %d = %d%n", arg1, arg2, ft.rsq(arg1, arg2));
+                     break;
+
+                 default:
+                     StdOut.println("Invalid command");
+
+             }
+
+        }
+
+
+        StdOut.close();
+    }
 
 
 }

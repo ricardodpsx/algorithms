@@ -3,7 +3,6 @@ package com.pachecode.algorithms.test;
 import static org.junit.Assert.*;
 
 import com.pachecode.algorithms.BinarySearch;
-import com.pachecode.algorithms.PartitionArray;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
